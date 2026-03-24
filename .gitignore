@@ -1,0 +1,27 @@
+# env
+.env
+*.env
+!.env.example
+
+# macOS
+.DS_Store
+
+# node
+node_modules
+.next
+out
+dist
+
+# python
+__pycache__/
+*.py[cod]
+*.sqlite3
+venv/
+.venv/
+
+# logs
+*.log
+
+# editor
+.vscode/
+.idea/

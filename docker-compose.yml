@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16
+    container_name: cpr-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: cpr-back
+    restart: always
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./back:/app
+    ports:
+      - "${BACK_PORT}:8000"
+    env_file:
+      - ./back/.env
+    depends_on:
+      - db
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: cpr-front
+    restart: always
+    command: npm run dev
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "${FRONT_PORT}:3000"
+    env_file:
+      - ./front/.env
+    depends_on:
+      - back
+
+volumes:
+  postgres_data:

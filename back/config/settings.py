@@ -34,6 +34,8 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
 
 # Application definition
 
+AUTH_USER_MODEL = "accounts.User"
+
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.admin',
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'accounts',
+    'profiles',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +133,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

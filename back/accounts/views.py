@@ -1,5 +1,10 @@
 from django.conf import settings
+from django.db.models.functions import Lower
+
+from drf_spectacular.utils import extend_schema
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,9 +12,17 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 
-from .serializers import LoginSerializer, SignupSerializer, UserSerializer
+from .models import User
+from .serializers import (
+    LoginSerializer,
+    SignupSerializer,
+    UserSerializer,
+    validate_login_id_format,
+    validate_nickname_format,
+)
 
 
 def refresh_cookie_options():
@@ -56,9 +69,13 @@ class LoginView(APIView):
         set_refresh_cookie(response, str(refresh))
         return response
 
-
+@extend_schema(
+    tags=["accounts"],
+    request=SignupSerializer   # <- Swagger에 body 구조 노출
+)
 class SignupView(APIView):
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
@@ -76,6 +93,56 @@ class SignupView(APIView):
         )
         set_refresh_cookie(response, str(refresh))
         return response
+
+
+class CheckLoginIdView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        login_id = request.query_params.get('login_id')
+        if not login_id:
+            return Response(
+                {'available': False, 'detail': 'login_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            validate_login_id_format(login_id)
+        except ValidationError as exc:
+            return Response(
+                {'available': False, 'detail': exc.detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {'available': not User.objects.filter(login_id=login_id).exists()},
+            status=status.HTTP_200_OK,
+        )
+
+
+class CheckNicknameView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        nickname = request.query_params.get('nickname')
+        if not nickname:
+            return Response(
+                {'available': False, 'detail': 'nickname is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            normalized_nickname = validate_nickname_format(nickname)
+        except ValidationError as exc:
+            return Response(
+                {'available': False, 'detail': exc.detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        is_used = Profile.objects.annotate(nickname_lower=Lower('nickname')).filter(
+            nickname_lower=normalized_nickname.lower()
+        ).exists()
+        return Response({'available': not is_used}, status=status.HTTP_200_OK)
 
 
 class RefreshView(APIView):

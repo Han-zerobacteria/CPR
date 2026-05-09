@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -27,6 +29,23 @@ ALLOWED_PROFILE_IMAGE_TYPES = {
     "image/avif",
 }
 MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024
+LOGIN_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]{3,19}$")
+NICKNAME_PATTERN = re.compile(r"^[가-힣A-Za-z0-9_.]{2,20}$")
+
+
+def validate_login_id_format(value):
+    if value != value.lower() or not LOGIN_ID_PATTERN.fullmatch(value):
+        raise serializers.ValidationError(LOGIN_ID_ERROR)
+    return value
+
+
+def validate_nickname_format(value):
+    nickname = value.strip()
+    if nickname != value:
+        raise serializers.ValidationError("Nickname cannot start or end with spaces.")
+    if not NICKNAME_PATTERN.fullmatch(nickname):
+        raise serializers.ValidationError(NICKNAME_ERROR)
+    return nickname
 
 
 class LoginSerializer(serializers.Serializer):
@@ -76,20 +95,13 @@ class SignupSerializer(serializers.ModelSerializer):
         ]
 
     def validate_login_id(self, value):
-        if value != value.lower():
-            raise serializers.ValidationError(LOGIN_ID_ERROR)
-        if not serializers.RegexField(r"^[a-z][a-z0-9_]{3,19}$").to_internal_value(value):
-            raise serializers.ValidationError(LOGIN_ID_ERROR)
+        validate_login_id_format(value)
         if User.objects.filter(login_id=value).exists():
             raise serializers.ValidationError("This login ID is already in use.")
         return value
 
     def validate_nickname(self, value):
-        nickname = value.strip()
-        if nickname != value:
-            raise serializers.ValidationError("Nickname cannot start or end with spaces.")
-        if not serializers.RegexField(r"^[가-힣A-Za-z0-9_.]{2,20}$").to_internal_value(nickname):
-            raise serializers.ValidationError(NICKNAME_ERROR)
+        nickname = validate_nickname_format(value)
         if Profile.objects.annotate(nickname_lower=Lower("nickname")).filter(
             nickname_lower=nickname.lower()
         ).exists():

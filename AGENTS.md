@@ -27,6 +27,8 @@ From the repository root:
 docker compose up --build
 ```
 
+Docker is the default development path for this repository. Prefer Docker Compose commands for installing dependencies, running the app, and validating integration behavior unless the user explicitly asks for a local-only workflow.
+
 Frontend:
 
 ```bash
@@ -53,7 +55,9 @@ python manage.py runserver 0.0.0.0:8000
 
 ## Validation Expectations
 
+- Before adding or installing frontend dependencies, check whether the Docker workflow should own dependency installation. If only dependency declarations are needed, update `front/package.json` and document whether `front/package-lock.json` was intentionally left unchanged.
 - Frontend changes should pass `npm run lint`; run `npx tsc --noEmit` for TypeScript surface changes.
+- For Docker-based frontend verification, prefer `docker compose build front` or `docker compose up --build front` over local `npm install` when dependency changes are involved.
 - Backend changes should at least pass `python -m compileall -q back`; run `python manage.py check` and `python manage.py test` when Django dependencies and env are available.
 - Full-stack changes should be smoke-tested with `docker compose up --build` when possible.
 - Authentication changes need extra care around JWT rotation, blacklist behavior, cookie path, SameSite, and CORS settings.

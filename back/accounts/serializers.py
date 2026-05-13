@@ -81,7 +81,7 @@ class SignupSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(trim_whitespace=False, write_only=True)
     nickname = serializers.CharField(write_only=True)
     profile_image = serializers.ImageField(write_only=True, required=False, allow_null=True)
-    bio = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=500)
+    bio = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=30)
 
     class Meta:
         model = User

@@ -24,7 +24,7 @@ class Profile(models.Model):
         default=Role.GENERAL_USER,
     )
     profile_image = models.ImageField(upload_to=profile_image_upload_path, blank=True, null=True)
-    bio = models.CharField(max_length=500, blank=True)
+    bio = models.CharField(max_length=30, blank=True)
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

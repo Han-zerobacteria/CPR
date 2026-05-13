@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ("nickname", models.CharField(max_length=20, unique=True)),
                 ("role", models.CharField(choices=[("general_user", "General user"), ("stylist", "Stylist")], default="general_user", max_length=20)),
                 ("profile_image", models.ImageField(blank=True, null=True, upload_to=profiles.models.profile_image_upload_path)),
-                ("bio", models.CharField(blank=True, max_length=500)),
+                ("bio", models.CharField(blank=True, max_length=30)),
                 ("is_public", models.BooleanField(default=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),

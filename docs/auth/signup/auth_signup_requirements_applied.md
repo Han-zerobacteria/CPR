@@ -71,6 +71,8 @@ CPRUser     불가
 
 User와 Profile은 `OneToOneField`로 연결된다.
 
+`bio`는 서비스 UX상 짧은 자기소개를 목표로 하며, 최대 30자까지 저장한다.
+
 ## 6. 닉네임 제약 조건
 
 `nickname`은 회원가입 시 필수 입력값이다.
@@ -153,7 +155,7 @@ POST /api/auth/signup/
 선택 입력값:
 
 - `profile_image`
-- `bio`
+- `bio` (최대 30자)
 
 예시 요청:
 

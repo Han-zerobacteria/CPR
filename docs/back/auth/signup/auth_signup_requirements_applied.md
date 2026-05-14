@@ -137,7 +137,7 @@ Profile의 `role` 필드는 유지한다.
 Endpoint:
 
 ```txt
-POST /api/auth/signup/
+POST /api/accounts/signup/
 ```
 
 요청 형식:

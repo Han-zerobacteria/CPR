@@ -22,8 +22,8 @@
 따라서 다음 두 API를 추가한다.
 
 ```txt
-GET /api/auth/check-login-id/?login_id={login_id}
-GET /api/auth/check-nickname/?nickname={nickname}
+GET /api/accounts/check-login-id/?login_id={login_id}
+GET /api/accounts/check-nickname/?nickname={nickname}
 ```
 
 ## 3. login_id 중복체크 요구사항
@@ -31,7 +31,7 @@ GET /api/auth/check-nickname/?nickname={nickname}
 Endpoint:
 
 ```txt
-GET /api/auth/check-login-id/
+GET /api/accounts/check-login-id/
 ```
 
 Query parameter:
@@ -84,7 +84,7 @@ Status:
 Endpoint:
 
 ```txt
-GET /api/auth/check-nickname/
+GET /api/accounts/check-nickname/
 ```
 
 Query parameter:
@@ -173,8 +173,8 @@ validate_nickname_format(value)
 `accounts.urls`에 다음 route를 추가한다.
 
 ```py
-path("check-login-id/", CheckLoginIdView.as_view(), name="auth-check-login-id")
-path("check-nickname/", CheckNicknameView.as_view(), name="auth-check-nickname")
+path("check-login-id/", CheckLoginIdView.as_view(), name="accounts-check-login-id")
+path("check-nickname/", CheckNicknameView.as_view(), name="accounts-check-nickname")
 ```
 
 ## 8. View 구현 방식

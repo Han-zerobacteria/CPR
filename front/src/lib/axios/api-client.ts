@@ -11,6 +11,18 @@ type RefreshResponse = {
   access: string;
 };
 
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
+
+  constructor(status: number, data: unknown) {
+    super(`API request failed with status ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
 let refreshPromise: Promise<string> | null = null;
 
 export async function apiClient<TResponse>(
@@ -36,12 +48,13 @@ export async function apiClient<TResponse>(
 
 async function request(path: string, init: ApiRequestInit) {
   const token = useAuthStore.getState().accessToken;
+  const isFormData = init.body instanceof FormData;
 
   return fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
@@ -66,9 +79,28 @@ async function refreshAccessToken() {
 }
 
 async function parseResponse<TResponse>(response: Response) {
+  const data = await parseResponseBody(response);
+
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`);
+    throw new ApiError(response.status, data);
   }
 
-  return response.json() as Promise<TResponse>;
+  return data as TResponse;
+}
+
+async function parseResponseBody(response: Response) {
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
 }

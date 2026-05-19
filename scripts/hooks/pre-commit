@@ -1,0 +1,91 @@
+#!/bin/sh
+set -eu
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+STAGED_FILES="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+fail=0
+
+run_check() {
+  echo ""
+  echo "==> $*"
+  "$@" || fail=1
+}
+
+has_staged_path() {
+  prefix="$1"
+  printf '%s\n' "$STAGED_FILES" | grep -q "^$prefix"
+}
+
+echo "Running CPR pre-commit checks..."
+
+echo ""
+echo "==> git diff --cached --check"
+git diff --cached --check || fail=1
+
+ENV_FILES="$(printf '%s\n' "$STAGED_FILES" | grep -E '(^|/)\.env$|\.env$' || true)"
+if [ -n "$ENV_FILES" ]; then
+  if printf '%s\n' "$ENV_FILES" | grep -Ev '\.env\.example$' >/dev/null; then
+    echo ""
+    echo "ERROR: Do not commit environment files. Commit .env.example templates only."
+    fail=1
+  fi
+fi
+
+if has_staged_path "front/"; then
+  if [ -d "front/node_modules" ]; then
+    run_check sh -c 'cd front && npm run lint'
+    run_check sh -c 'cd front && npx tsc --noEmit'
+  else
+    echo ""
+    echo "Skipping frontend lint/typecheck: front/node_modules is missing."
+    echo "Run: cd front && npm install"
+  fi
+fi
+
+if has_staged_path "back/"; then
+  PYTHON_BIN="$(command -v python3 || true)"
+  if [ -x "$ROOT/back/.venv/bin/python" ]; then
+    PYTHON_BIN="$ROOT/back/.venv/bin/python"
+  elif [ -x "$ROOT/.venv/bin/python" ]; then
+    PYTHON_BIN="$ROOT/.venv/bin/python"
+  elif [ -z "$PYTHON_BIN" ] && command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python)"
+  fi
+
+  if [ -z "$PYTHON_BIN" ]; then
+    echo ""
+    echo "ERROR: Python is required for backend checks."
+    fail=1
+  else
+    run_check "$PYTHON_BIN" -m compileall -q back
+  fi
+
+  if [ -n "$PYTHON_BIN" ] && "$PYTHON_BIN" -c "import django" >/dev/null 2>&1; then
+    echo ""
+    echo "==> cd back && $PYTHON_BIN manage.py check"
+    (cd back && "$PYTHON_BIN" manage.py check) || fail=1
+    echo ""
+    echo "==> cd back && $PYTHON_BIN manage.py test"
+    (cd back && "$PYTHON_BIN" manage.py test) || fail=1
+  else
+    echo ""
+    echo "Skipping Django checks: Django is not installed for $PYTHON_BIN."
+    echo "Run: cd back && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Pre-commit checks failed."
+  exit 1
+fi
+
+echo ""
+echo "Pre-commit checks passed."

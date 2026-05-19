@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.models.functions import Lower
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
@@ -17,8 +17,14 @@ from profiles.serializers import ProfileSerializer
 
 from .models import User
 from .serializers import (
+    AccessTokenResponseSerializer,
+    AuthUserProfileResponseSerializer,
+    AvailabilityResponseSerializer,
+    DetailResponseSerializer,
     LoginSerializer,
+    LoginResponseSerializer,
     SignupSerializer,
+    SignupResponseSerializer,
     UserSerializer,
     validate_login_id_format,
     validate_nickname_format,
@@ -53,6 +59,11 @@ def delete_refresh_cookie(response):
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["auth"],
+        request=LoginSerializer,
+        responses={200: LoginResponseSerializer},
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -69,14 +80,15 @@ class LoginView(APIView):
         set_refresh_cookie(response, str(refresh))
         return response
 
-@extend_schema(
-    tags=["accounts"],
-    request=SignupSerializer   # <- Swagger에 body 구조 노출
-)
 class SignupView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
+    @extend_schema(
+        tags=["accounts"],
+        request=SignupSerializer,
+        responses={201: SignupResponseSerializer},
+    )
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -98,6 +110,21 @@ class SignupView(APIView):
 class CheckLoginIdView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["accounts"],
+        parameters=[
+            OpenApiParameter(
+                name="login_id",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            )
+        ],
+        responses={
+            200: AvailabilityResponseSerializer,
+            400: AvailabilityResponseSerializer,
+        },
+    )
     def get(self, request):
         login_id = request.query_params.get('login_id')
         if not login_id:
@@ -123,6 +150,21 @@ class CheckLoginIdView(APIView):
 class CheckNicknameView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["accounts"],
+        parameters=[
+            OpenApiParameter(
+                name="nickname",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            )
+        ],
+        responses={
+            200: AvailabilityResponseSerializer,
+            400: AvailabilityResponseSerializer,
+        },
+    )
     def get(self, request):
         nickname = request.query_params.get('nickname')
         if not nickname:
@@ -148,6 +190,11 @@ class CheckNicknameView(APIView):
 class RefreshView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["auth"],
+        request=None,
+        responses={200: AccessTokenResponseSerializer, 401: DetailResponseSerializer},
+    )
     def post(self, request):
         refresh_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME)
         if not refresh_token:
@@ -174,6 +221,11 @@ class RefreshView(APIView):
 class LogoutView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["auth"],
+        request=None,
+        responses={204: None},
+    )
     def post(self, request):
         refresh_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME)
 
@@ -191,6 +243,10 @@ class LogoutView(APIView):
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=["auth"],
+        responses={200: AuthUserProfileResponseSerializer},
+    )
     def get(self, request):
         return Response(
             {

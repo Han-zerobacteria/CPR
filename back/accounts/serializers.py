@@ -166,3 +166,26 @@ class SignupResponseSerializer(serializers.Serializer):
     accessToken = serializers.CharField()
     user = UserSerializer()
     profile = ProfileSerializer()
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    accessToken = serializers.CharField()
+    user = UserSerializer()
+
+
+class AccessTokenResponseSerializer(serializers.Serializer):
+    accessToken = serializers.CharField()
+
+
+class AvailabilityResponseSerializer(serializers.Serializer):
+    available = serializers.BooleanField()
+    detail = serializers.JSONField(required=False)
+
+
+class AuthUserProfileResponseSerializer(serializers.Serializer):
+    user = UserSerializer()
+    profile = ProfileSerializer()
+
+
+class DetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()

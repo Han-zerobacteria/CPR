@@ -3,11 +3,27 @@
 :root {
   --background: #f7f7f8;
   --foreground: #171717;
+  --brand-primary: #09090b;
+  --brand-primary-hover: #27272a;
+  --brand-surface: #ffffff;
+  --brand-border: #e4e4e7;
+  --brand-muted: #71717a;
+  --brand-danger: #dc2626;
+  --brand-danger-surface: #fef2f2;
+  --brand-danger-border: #fecaca;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-border: var(--brand-border);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-danger: var(--brand-danger);
+  --color-brand-danger-surface: var(--brand-danger-surface);
+  --color-brand-danger-border: var(--brand-danger-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

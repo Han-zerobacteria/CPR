@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { create } from "zustand";
 
 type AuthUser = {
   id: string;
@@ -9,57 +9,36 @@ type AuthUser = {
   profileImageUrl?: string | null;
 };
 
+type AuthStatus = "idle" | "checking" | "authenticated" | "unauthenticated";
+
 type AuthState = {
+  status: AuthStatus;
   accessToken: string | null;
   user: AuthUser | null;
+  startChecking: () => void;
   setSession: (session: { accessToken: string; user: AuthUser }) => void;
   setAccessToken: (accessToken: string | null) => void;
   clearSession: () => void;
 };
 
-type AuthListener = () => void;
-
-type AuthStoreHook = {
-  <T>(selector: (state: AuthState) => T): T;
-  getState: () => AuthState;
-};
-
-const listeners = new Set<AuthListener>();
-
-let authState: AuthState = {
+export const useAuthStore = create<AuthState>((set) => ({
+  status: "idle",
   accessToken: null,
   user: null,
+  startChecking: () => {
+    set({ status: "checking" });
+  },
   setSession: ({ accessToken, user }) => {
-    setAuthState({ accessToken, user });
+    set({ accessToken, user, status: "authenticated" });
   },
   setAccessToken: (accessToken) => {
-    setAuthState({ accessToken });
+    set({ accessToken });
   },
   clearSession: () => {
-    setAuthState({ accessToken: null, user: null });
+    set({
+      accessToken: null,
+      user: null,
+      status: "unauthenticated",
+    });
   },
-};
-
-function setAuthState(nextState: Partial<AuthState>) {
-  authState = { ...authState, ...nextState };
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: AuthListener) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export const useAuthStore: AuthStoreHook = <T,>(
-  selector: (state: AuthState) => T,
-) => {
-  return useSyncExternalStore(
-    subscribe,
-    () => selector(authState),
-    () => selector(authState),
-  );
-};
-
-useAuthStore.getState = () => authState;
+}));

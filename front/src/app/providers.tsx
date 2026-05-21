@@ -1,5 +1,7 @@
 "use client";
 
+import { AuthBootstrap } from "@/features/auth/components/AuthBootstrap";
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <AuthBootstrap>{children}</AuthBootstrap>;
 }

@@ -39,13 +39,14 @@ if [ -n "$ENV_FILES" ]; then
 fi
 
 if has_staged_path "front/"; then
-  if [ -d "front/node_modules" ]; then
-    run_check sh -c 'cd front && npm run lint'
-    run_check sh -c 'cd front && npx tsc --noEmit'
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    run_check docker compose run -T --rm --no-deps front npm run lint
+    run_check docker compose run -T --rm --no-deps front npx tsc --noEmit
   else
     echo ""
-    echo "Skipping frontend lint/typecheck: front/node_modules is missing."
-    echo "Run: cd front && npm install"
+    echo "ERROR: Docker Compose is required for frontend pre-commit checks."
+    echo "Run: docker compose build front"
+    fail=1
   fi
 fi
 

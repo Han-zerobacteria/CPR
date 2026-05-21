@@ -8,7 +8,7 @@ type ApiRequestInit = RequestInit & {
 };
 
 type RefreshResponse = {
-  access: string;
+  accessToken: string;
 };
 
 export class ApiError extends Error {
@@ -65,7 +65,7 @@ async function refreshAccessToken() {
   refreshPromise ??= refreshClient<RefreshResponse>("/api/auth/refresh/", {
     method: "POST",
   })
-    .then((response) => response.access)
+    .then((response) => response.accessToken)
     .finally(() => {
       refreshPromise = null;
     });

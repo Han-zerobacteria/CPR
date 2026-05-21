@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/axios/api-client";
-import type { AuthMeResponse, LoginPayload, LoginResponse } from "../model/login-types";
+import { fetchCurrentUser } from "./session-api";
+import type { LoginPayload, LoginResponse } from "../model/login-types";
 
 export function login(payload: LoginPayload) {
   return apiClient<LoginResponse>("/api/auth/login/", {
@@ -10,5 +11,5 @@ export function login(payload: LoginPayload) {
 }
 
 export function fetchMe() {
-  return apiClient<AuthMeResponse>("/api/auth/me/");
+  return fetchCurrentUser();
 }
